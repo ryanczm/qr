@@ -7,7 +7,7 @@
 
 ## Main Code
 
-The class `UniswapPool` implements the Uniswap V2 pool logic, with the `add_liquidity`, `remove_liquidity` and `swap` methods. This is then used by the `eth_in, eth_profit = optimal profit(ax, ay, bx, by)` function, which for given $X_1, Y_1, X_1, Y_2$ calculates the maximum profit that can be made and the initial ETH amount to swap in. The pool values were referenced from (here)[https://v2.info.uniswap.org/pair/0xa478c2975ab1ea89e8196811f51a7b7ade33eb11].
+The class `UniswapPool` implements the Uniswap V2 pool logic, with the `add_liquidity`, `remove_liquidity` and `swap` methods. This is then used by the `eth_in, eth_profit = optimal profit(ax, ay, bx, by)` function, which for given $X_1, Y_1, X_1, Y_2$ calculates the maximum profit that can be made and the initial ETH amount to swap in. The pool values were referenced from this [v2 pool](https://v2.info.uniswap.org/pair/0xa478c2975ab1ea89e8196811f51a7b7ade33eb11).
 
 `python -m uniswap_arb.py`
 
@@ -22,7 +22,7 @@ Enter ETH in pool B (Y2): 4000
 ETH in: 243.79791307173326 | ETH profit: 29.792787666814377
 Buy DAI in pool B with 243.79791307173326 ETH and sell it in pool A for a profit of 29.792787666814377
 ```
-If  `y`, then samples x1, x2 randomly from (7000000, 8000000) and y1, y2 from (3000,5000).
+If  `y`, then samples `x1, x2` randomly from $\sim U(7000000, 8000000)$ and `y1`, `y2` from $\sim U(3000,5000)$. This range is too wide to be unrealistic but I don't trade crypto so I don't know a realistic range.
 
 ```
 Randomize inputs? [y/n]: y
@@ -34,8 +34,9 @@ Buy DAI in pool A with 191.87043779523333 ETH and sell it in pool B for a profit
 
 ## Arbitrage Calculation Logic
 
-The profit function, given constants $X_1, Y_1, X_2, Y_2$, fee constant $\gamma=0.997$ and $k_i = X_i * Y_i$ and initial ETH input $y'$ can be written as: $$P(y')=Y_2 - \frac{k_2}{X_2 + \gamma[X_1 - \frac{k_1}{Y_1 + \gamma \cdot y' }]} - y'$$ Which simulates swapping ETH to DAI in the pool where DAI is cheaper, then selling that DAI for ETH in the pool where DAI is more expensive. We could set the derivative $\frac{dP}{dy'}=0$ and solve for $y'$. However, optimization was chosen as the function is convex & single-variable and analytically solving for the maximum of the function is troublesome. To find optimal `y'` for the given `X_i, Y_i`, we use `scipy.optimize.minimize` to optimize the profit function with bounds. The lower bound is near 0, while I chose the upper bound by the formula $$B_u =\max(\frac{y_1}{x_1}, \frac{y_2}{x_2}) * \max(x_1,x_2)$$ which was empirically chosen to get a small bound while covering the maximum profit. and the initial guess `x0` is midpoint of these bounds. However, there seems to be a better method for choosing an upper bound as this bound is overkill for imbalanced ratios (e.g 7,737,000 DAI to 4300 ETH).If speed is a concern, solving the analytical formula would be quicker than optimization (taking the derivative and setting to $0$, $Y_2$ disappears and the $-y'$ term becomes $-1$, leaving the middle expression).
+The profit function, given constants $X_1, Y_1, X_2, Y_2$, fee constant $\gamma=0.997$ and $k_i = X_i * Y_i$ and initial ETH input $y'$ can be written as: $$P(y')=Y_2 - \frac{k_2}{X_2 + \gamma[X_1 - \frac{k_1}{Y_1 + \gamma \cdot y' }]} - y'$$ Which simulates swapping ETH to DAI in the pool where DAI is cheaper, then selling that DAI for ETH in the pool where DAI is more expensive. We could set the derivative $\frac{dP}{dy'}=0$ and solve for $y'$. However, optimization was chosen as the function is convex & single-variable and analytically solving for the maximum of the function is troublesome. To find optimal `y'` for the given `X_i, Y_i`, we use `scipy.optimize.minimize` to optimize the profit function with bounds. The lower bound is near 0, while I chose the upper bound by the formula $$B_u =\max(\frac{y_1}{x_1}, \frac{y_2}{x_2}) * \max(x_1,x_2)$$ which was empirically chosen to get a small bound while covering the maximum profit. and the initial guess `x0` is midpoint of these bounds. However, there seems to be a better method for choosing an upper bound as this bound is overkill for imbalanced ratios (e.g 7,737,000 DAI to 4300 ETH).If speed is a concern, solving the analytical formula would be quicker. It is in the form $P=\frac{ax+b}{cx+d}$ which can be evaluated with the quotient rule to give $P'=\frac{ad-bc}{(cx+d)^2}$. However to manipulate the original expression into the fraction form is very troublesome.
 
+To find a suitable upper bound, we can take the historical max/min values of DAI/ETH in the pool for a past period, then plug them into the optimization to see what ETH input is produced, and take that as the bound.
 
 ## Test Cases
 
