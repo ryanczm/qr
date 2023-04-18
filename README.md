@@ -13,5 +13,6 @@ This is a repo for quant analysis/data analysis projects in finance. I am still 
     * Everything was correct but the profit logic was slightly incorrect. I did this for the V2 protocol.
 
 * `economic_regime_avm.ipynb` - Technical project from AVM Capital for the Quant Analyst Intern role. 
-    * Asked to calculate returns of a quarterly rebalancing strategy of a portfolio of S&P, Gold & US Treasuries over several decades based on macro regimes (rising/falling growth/inflation from GDP/CPI data) and benchmark against long S&P performance. 
-    * However, I was informed my strategy had lookahead bias, being unaware that the GDP/CPI figures were usually released after the start of the quarter. Thus, leading macro indicators (e.g PMI, yield curve spread, VIX) could be used instead.
+    * Asked to come up with a strategy to beat long S&P based on holding SPX, Gold, and US10Y, adjusting portfolio based on macro conditions. I went with a quarterly rebalancing over several decades based on regimes of rising/falling growth/inflation from GDP/CPI data.
+    * The idea was to classify the in-sample period into regime quadrants based on GDP/CPI data, calculate Sharpe ratios of each instrument for each regime, then use their normalized Sharpes as an alpha vector for portfolio weights for that regime, and evaluate on out-sample data (IR of ~0.2).
+    * However, I was informed my strategy had lookahead bias, being unaware that the GDP/CPI figures were usually released after the start of the quarter. Thus, leading macro indicators (e.g PMI, yield curve spread, VIX) could be used instead as proxies.
